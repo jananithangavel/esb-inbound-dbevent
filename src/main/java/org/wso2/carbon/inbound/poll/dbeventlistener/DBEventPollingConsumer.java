@@ -30,11 +30,11 @@ import org.wso2.carbon.base.MultitenantConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.inbound.endpoint.protocol.generic.GenericPollingConsumer;
 
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
-import java.sql.Statement;
 import java.sql.DriverManager;
 import java.sql.Types;
 
@@ -98,7 +98,7 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
      * @return status
      */
     private boolean inject(OMElement object, String deleteQuery, String updateQuery, String lastProcessedTimestamp) {
-        Statement statement = null;
+        PreparedStatement statement = null;
         String query = null;
         DBEventRegistryHandler dbEventListnerRegistryHandler = new DBEventRegistryHandler();
         msgCtx = createMessageContext();
@@ -129,11 +129,11 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
                 if (StringUtils.isNotEmpty(deleteQuery)) {
                     statement = connection.prepareStatement(deleteQuery);
                     query = deleteQuery;
-                    statement.execute(deleteQuery);
+                    statement.executeQuery();
                 } else if (StringUtils.isNotEmpty(updateQuery)) {
                     statement = connection.prepareStatement(updateQuery);
                     query = updateQuery;
-                    statement.execute(updateQuery);
+                    statement.executeQuery();
                 }
             }
         } catch (SQLException e) {
@@ -169,7 +169,7 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
      * Execute the query to retrieve the records, create each record as OMElement and inject to the sequence
      */
     private void fetchDataAndInject() {
-        Statement statement = null;
+        PreparedStatement statement = null;
         ResultSet rs = null;
         String deleteQuery = null;
         String updateQuery = null;
@@ -183,7 +183,7 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
                 filteringColumnName, lastUpdatedTimestampFromRegistry);
         try {
             statement = connection.prepareStatement(dbScript);
-            rs = statement.executeQuery(dbScript);
+            rs = statement.executeQuery();
             ResultSetMetaData metaData = rs.getMetaData();
             while (rs.next()) {
                 if (filteringCriteria.equals(DBEventConstants.DB_DELETE_AFTER_POLL)) {
@@ -372,14 +372,14 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
         if (log.isDebugEnabled()) {
             log.info("Checking the connection status.");
         }
-        Statement statement = null;
+        PreparedStatement statement = null;
         ResultSet rs = null;
         try {
             if (connection == null || connection.isClosed()) {
                 createConnection();
             }
             statement = connection.prepareStatement(connectionValidationQuery);
-            rs = statement.executeQuery(connectionValidationQuery);
+            rs = statement.executeQuery();
             if(rs == null || rs.first()) {
                 return true;
             }
